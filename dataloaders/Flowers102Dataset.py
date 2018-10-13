@@ -43,8 +43,9 @@ class Flowers102Dataset(fl17.Flowers17Dataset):
                 
             if dataset_type == image_type:
                 self.images.append(image_path)
+                self.labels.append(labels[i]-1) 
              
-            self.labels = (labels-1).tolist() 
+            
                 
         self.rotation = False
         self.crop = False
