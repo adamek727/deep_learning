@@ -37,6 +37,6 @@ class ResidualBlock(nn.Module):
         x = x + residue
         
         if(self.maxpooling):
-            return x
+            return self.maxpool(x)
         else:
-            return self.maxpool(x) 
+            return x 

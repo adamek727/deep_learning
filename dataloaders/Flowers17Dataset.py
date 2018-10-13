@@ -4,36 +4,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 import scipy.ndimage
+import scipy.io
 import skimage
 import math
 import random
-import pickle
+import glob
 
 
-class Cifar10Dataset(data.Dataset):
+class Flowers17Dataset(data.Dataset):
     
-    def __init__(self, folder_path, dataset_type='train',device='cpu'):
+    def __init__(self, folder_path, dataset_type='train',device='cpu', image_size=100):
+        
+        super(Flowers17Dataset, self).__init__()
         
         self.folder_path = folder_path
         self.images = []
         self.labels = []
-        
-        if dataset_type == 'train':
-            self.all_files = ['data_batch_1', 'data_batch_2', 'data_batch_3', 'data_batch_4']
-        if dataset_type == 'val':
-            self.all_files = ['data_batch_5']
-        if dataset_type == 'test':
-            self.all_files = ['test_batch']
-        
-        self.metadata = self.__unpickle__(folder_path+'batches.meta')
-        self.image_size = self.metadata[b'num_vis']
-        self.images_per_batch = self.metadata[b'num_cases_per_batch']
-        self.label_names = self.metadata[b'label_names']
+        self.images_per_class = 80
         self.image_channels = 3
-        self.channel_size = int(self.image_size / self.image_channels)
-        self.image_side_size = int(math.sqrt(self.channel_size))
+        self.image_side_size = image_size
         self.dataset_type = dataset_type
         
+        files = glob.glob(folder_path+'*.jpg')
+        files.sort(key=lambda x: x.lower())
+        
+        for i, image_path in enumerate(files):
+            
+            image_type = 'train'
+            if (i % 10 == 8):
+                image_type = 'val'
+            if (i % 10 == 9):
+                image_type = 'test'
+                
+                
+            if dataset_type == image_type:
+                self.images.append(image_path)
+                self.labels.append(int(i/self.images_per_class))    
         
         self.rotation = False
         self.crop = False
@@ -44,21 +50,6 @@ class Cifar10Dataset(data.Dataset):
         self.mean = 0.5
         self.std_dev = 0.1
         self.normalization = False
-        
-        for file in self.all_files:
-            
-            binary_data = self.__unpickle__(folder_path+file)
-            images = binary_data[b'data']
-            labels = binary_data[b'labels']
-            
-            for i in range(self.images_per_batch):
-                image = np.zeros((self.image_side_size, self.image_side_size, self.image_channels), dtype=np.uint8)
-
-                for j in range(self.image_channels):
-                    image[:,:,j] = images[i, j*self.channel_size:(j+1)*self.channel_size].reshape(self.image_side_size, self.image_side_size)
-                
-                self.images.append(image)
-                self.labels.append(labels[i])
         
     def __len__(self):
         
@@ -72,7 +63,12 @@ class Cifar10Dataset(data.Dataset):
     
     def __getitem__(self, index):
         
-        img = self.images[index].copy()
+        img = scipy.misc.imread(self.images[index])
+        
+        if img.shape[0] > img.shape[1]:
+            img = np.rot90(img)
+            
+        img = scipy.misc.imresize(img, (self.image_side_size,self.image_side_size))
         
         if(self.normalization):
             img = self.normalize(img)
@@ -81,13 +77,6 @@ class Cifar10Dataset(data.Dataset):
         
         img = np.transpose(img, (2, 1, 0))
         return img.astype(np.float32)/255, self.labels[index]
-    
-    
-    def __unpickle__(self, file):
-        
-        with open(file, 'rb') as fo:
-            dict = pickle.load(fo, encoding='bytes')
-        return dict
     
     
     def getNameForLabel(self, label):
@@ -166,4 +155,4 @@ class Cifar10Dataset(data.Dataset):
                              
         plt.imshow( np.transpose(image[:,:,:].numpy(), (1, 2, 0)))
         plt.show()
-        print(self.getNameForLabel(label))
+        print('label: ',label)
