@@ -76,12 +76,12 @@ class FlowerModel(nn.Module):
         
         return x
     
-    def save_model(self, state, is_best, directory='models/',filename='checkpoint.pth.tar'):
+    def save_model(self, state, is_best, directory='checkpoints/',filename='checkpoint.pth.tar'):
         torch.save(state, directory+self.model_name+'_'+filename)
         if is_best:
             torch.save(state, directory+self.model_name+'_'+'model_best.pth.tar')
             
-    def load_model(self, load_best=False, directory='models/', filename='checkpoint.pth.tar'):
+    def load_model(self, load_best=False, directory='checkpoints/', filename='checkpoint.pth.tar'):
         
         path = directory + self.model_name + '_' + filename
         if load_best == True:
