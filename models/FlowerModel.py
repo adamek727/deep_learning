@@ -80,3 +80,13 @@ class FlowerModel(nn.Module):
         torch.save(state, directory+self.model_name+'_'+filename)
         if is_best:
             torch.save(state, directory+self.model_name+'_'+'model_best.pth.tar')
+            
+    def load_model(self, load_best=False, directory='models/', filename='checkpoint.pth.tar'):
+        
+        path = directory + self.model_name + '_' + filename
+        if load_best == True:
+            path = directory + self.model_name + '_' + 'model_best.pth.tar'
+        checkpoint = torch.load(path)
+        self.load_state_dict(checkpoint['state_dict'])
+        
+        
